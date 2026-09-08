@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f6d365">
+  <title>춘식이 다마고치 - Prototype</title>
+  <style>
+    *{box-sizing:border-box} body{margin:0;background:#e9e4d8;color:#2d2a26;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:flex;justify-content:center;min-height:100vh;padding:18px}
+    button{font:inherit}.game{width:min(440px,100%);background:#f7f2e8;border:5px solid #2d2a26;border-radius:24px;box-shadow:0 10px 0 #c7c0b2;overflow:hidden}.top{padding:16px 18px 10px;display:flex;justify-content:space-between;font-weight:800}.screen{margin:0 14px;background:#b8d89c;border:5px solid #2d2a26;border-radius:16px;padding:12px;image-rendering:pixelated}.scene{height:290px;background:linear-gradient(#b8d89c 0 72%,#8bb56d 72%);border:3px solid #50633d;border-radius:10px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}.cloud{position:absolute;font-size:34px;opacity:.45}.c1{top:20px;left:25px}.c2{top:55px;right:35px}.pet{font-size:104px;filter:drop-shadow(4px 5px 0 rgba(0,0,0,.16));animation:bob 1.8s infinite ease-in-out;user-select:none}.pet.sleep{animation:none;transform:rotate(4deg)}@keyframes bob{50%{transform:translateY(-5px)}}.bubble{position:absolute;bottom:15px;background:#f8f1dc;border:3px solid #2d2a26;border-radius:12px;padding:7px 11px;font-weight:800;font-size:14px}.stats{display:grid;gap:7px;padding:14px 4px 4px}.stat{display:grid;grid-template-columns:72px 1fr 38px;gap:8px;align-items:center;font-size:13px;font-weight:800}.bar{height:14px;background:#e7ddc9;border:2px solid #2d2a26;border-radius:10px;overflow:hidden}.fill{height:100%;width:50%;background:#5f9d58;transition:.25s}.danger{background:#d66b5d}.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:15px 14px}.action{border:3px solid #2d2a26;border-radius:13px;background:#fff8e9;padding:11px 4px;font-weight:900;cursor:pointer;box-shadow:0 4px 0 #bcb3a2}.action:active{transform:translateY(3px);box-shadow:0 1px 0 #bcb3a2}.action small{display:block;font-size:11px;margin-top:3px;font-weight:600}.bottom{display:grid;grid-template-columns:repeat(3,1fr);border-top:3px solid #2d2a26}.bottom button{border:0;background:#eee6d8;padding:12px 4px;cursor:pointer;font-weight:800}.bottom button+button{border-left:2px solid #2d2a26}.panel{padding:0 18px 18px}.panel h3{margin:12px 0 8px}.hidden{display:none}.toast{position:fixed;left:50%;bottom:25px;transform:translateX(-50%);background:#2d2a26;color:white;padding:10px 16px;border-radius:999px;font-weight:800;opacity:0;pointer-events:none;transition:.2s}.toast.show{opacity:1}.reset{margin-top:8px;width:100%;padding:9px;border:2px solid #2d2a26;border-radius:10px;background:#fff}.version{text-align:center;font-size:11px;padding:9px;color:#777}
+  </style>
+</head>
+<body>
+<div class="game">
+  <div class="top"><span>🐱 춘식이 키우기</span><span id="day">DAY 1</span></div>
+  <div class="screen">
+    <div class="scene" id="scene"><span class="cloud c1">☁️</span><span class="cloud c2">☁️</span><div class="pet" id="pet">🐱</div><div class="bubble" id="message">안녕! 나를 키워줘!</div></div>
+    <div class="stats" id="stats"></div>
+  </div>
+  <div class="actions">
+    <button class="action" onclick="act('food')">🍚 먹이<small>배고픔 ↓ 행복 ↑</small></button>
+    <button class="action" onclick="act('exercise')">🏃 운동<small>건강 ↑ 피로 ↑</small></button>
+    <button class="action" onclick="act('play')">🎮 놀이<small>행복 ↑ 애정 ↑</small></button>
+    <button class="action" onclick="act('clean')">🧼 씻기<small>청결 ↑</small></button>
+    <button class="action" onclick="act('study')">📚 공부<small>지능 ↑ 스트레스 ↑</small></button>
+    <button class="action" onclick="act('sleep')">😴 잠<small>피로 ↓ 스트레스 ↓</small></button>
+  </div>
+  <div class="panel hidden" id="collection"><h3>📖 춘식이 도감</h3><div id="dex"></div></div>
+  <div class="panel hidden" id="room"><h3>🏡 방</h3><p>아직 비어 있어요. 다음 버전에서 가구와 배경을 추가합니다.</p></div>
+  <div class="bottom"><button onclick="showPanel('home')">🏠 홈</button><button onclick="showPanel('collection')">📖 도감</button><button onclick="showPanel('room')">🏡 방</button></div>
+  <div class="version">Prototype v0.1 · 저장은 이 기기에 자동으로 됩니다.</div>
+</div><div class="toast" id="toast"></div>
+<script>
+const KEY='choonsik-damagochi-v01';
+const initial={day:1,last:Date.now(),actions:{food:0,exercise:0,play:0,clean:0,study:0,sleep:0},stats:{hunger:35,happiness:70,stress:20,fatigue:25,clean:80,health:60,affection:50,intelligence:20},evolution:'아기 춘식이'};
+let state=load();
+function clamp(n){return Math.max(0,Math.min(100,n))}
+function load(){try{return {...initial,...JSON.parse(localStorage.getItem(KEY))}}catch(e){return initial}}
+function save(){state.last=Date.now();localStorage.setItem(KEY,JSON.stringify(state))}
+function elapsed(){return Math.max(0,Date.now()-state.last)}
+function applyOffline(){const hours=Math.min(24,elapsed()/3600000);if(hours>0.02){state.stats.hunger=clamp(state.stats.hunger+hours*8);state.stats.fatigue=clamp(state.stats.fatigue+hours*3);state.stats.stress=clamp(state.stats.stress+hours*2);state.stats.clean=clamp(state.stats.clean-hours*2);state.day=Math.max(1,Math.floor((Date.now()-new Date(new Date().getFullYear(),new Date().getMonth(),new Date().getDate()).getTime())/86400000)+1)}}
+function act(type){const s=state.stats;state.actions[type]++;const effects={food:{hunger:-25,happiness:5,affection:2},exercise:{health:6,stress:-5,fatigue:12,hunger:8},play:{happiness:10,affection:4,stress:-4,fatigue:5},clean:{clean:30,happiness:3,stress:-2},study:{intelligence:5,fatigue:8,stress:5},sleep:{fatigue:-30,stress:-10,health:3}}[type];for(const k in effects)s[k]=clamp(s[k]+effects[k]);checkEvolution();save();render();flash(type==='food'?'냠냠! 맛있다!':type==='exercise'?'운동 완료!':type==='play'?'같이 노니까 좋아!':type==='clean'?'뽀송뽀송해졌어!':type==='study'?'공부 열심히 했어!':'잘 자, 춘식이!')}
+function checkEvolution(){const s=state.stats,a=state.actions;let next='아기 춘식이';if(a.exercise>=8&&s.health>=70&&s.stress<55)next='헬스 춘식이';if(a.food>=12&&a.exercise<5)next='먹보 춘식이';if(a.study>=10&&s.intelligence>=55)next='똑똑 춘식이';if(a.sleep>=12&&s.fatigue<35)next='잠꾸러기 춘식이';if(a.play>=12&&s.affection>=70)next='인싸 춘식이';if(s.clean>=85&&a.clean>=8)next='깔끔 춘식이';if(next!==state.evolution){state.evolution=next;flash('✨ 춘식이가 '+next+'로 성장했어요!')}}
+function render(){const s=state.stats;document.getElementById('day').textContent='DAY '+state.day;const rows=[['🍚 배고픔','hunger',s.hunger],['😊 행복','happiness',s.happiness],['😫 스트레스','stress',s.stress],['😴 피로','fatigue',s.fatigue],['🧼 청결','clean',s.clean]];document.getElementById('stats').innerHTML=rows.map(([n,k,v])=>`<div class="stat"><span>${n}</span><div class="bar"><div class="fill ${(['hunger','stress','fatigue'].includes(k)&&v>70)?'danger':''}" style="width:${v}%"></div></div><span>${Math.round(v)}</span></div>`).join('');document.getElementById('message').textContent=state.evolution+' · '+mood();document.getElementById('pet').textContent=state.evolution.includes('헬스')?'💪🐱':state.evolution.includes('먹보')?'🍖🐱':state.evolution.includes('똑똑')?'🧠🐱':state.evolution.includes('잠꾸러기')?'😴🐱':state.evolution.includes('인싸')?'😎🐱':state.evolution.includes('깔끔')?'🧼🐱':'🐱';document.getElementById('dex').innerHTML=['아기 춘식이','먹보 춘식이','헬스 춘식이','똑똑 춘식이','잠꾸러기 춘식이','인싸 춘식이','깔끔 춘식이'].map(x=>`<p>${x===state.evolution?'✅':'⬜'} ${x}</p>`).join('')}
+function mood(){const s=state.stats;if(s.stress>75)return'많이 힘들어해요';if(s.hunger>75)return'배가 고파요';if(s.fatigue>75)return'졸려요';if(s.happiness>80)return'기분이 아주 좋아요';return'오늘도 함께 놀자!' }
+function showPanel(id){document.getElementById('collection').classList.toggle('hidden',id!=='collection');document.getElementById('room').classList.toggle('hidden',id!=='room');document.querySelector('.actions').style.display=id==='home'?'grid':'none';document.querySelector('.screen').style.display=id==='home'?'block':'none'}
+function flash(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1300)}
+applyOffline();save();render();setInterval(()=>{state.stats.hunger=clamp(state.stats.hunger+.25);state.stats.fatigue=clamp(state.stats.fatigue+.08);state.stats.clean=clamp(state.stats.clean-.08);if(state.stats.hunger>80)state.stats.happiness=clamp(state.stats.happiness-.1);save();render()},30000);
+</script></body></html>
