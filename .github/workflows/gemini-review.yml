@@ -1,0 +1,27 @@
+name: Gemini PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Gemini PR Review Action
+        uses: sshnaidm/gemini-code-review-action@v2
+        with:
+          gemini-key: ${{ secrets.GEMINI_API_KEY }}
+          prompt: |
+            당신은 시니어 코드 리뷰어입니다. 변경사항(diff)을 검토하고 한국어로 피드백을 제공하세요:
+            1. 버그 및 성능 이슈
+            2. 가독성 및 개선 제안
+            3. 보안 취약점
+          model: "gemini-2.5-pro"
