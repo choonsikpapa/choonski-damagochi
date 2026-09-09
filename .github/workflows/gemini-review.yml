@@ -1,27 +1,29 @@
-name: Gemini PR Review
+name: Gemini Auto Fix
 
 on:
-  pull_request:
-    types: [opened, synchronize]
+  issue_comment:
+    types: [created]
 
 jobs:
-  review:
+  autofix:
+    # PR 댓글에 /fix 라고 입력했을 때만 작동
+    if: github.event.issue.pull_request && contains(github.event.comment.body, '/fix')
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write # 코드 직접 수정 및 push 권한
       pull-requests: write
+      issues: write
 
     steps:
-      - name: Checkout Code
+      - name: Checkout PR Code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.issue.pull_request.head.ref }}
 
-      - name: Gemini PR Review Action
+      - name: Gemini Auto Fix Action
         uses: sshnaidm/gemini-code-review-action@v2
         with:
           gemini-key: ${{ secrets.GEMINI_API_KEY }}
-          prompt: |
-            당신은 시니어 코드 리뷰어입니다. 변경사항(diff)을 검토하고 한국어로 피드백을 제공하세요:
-            1. 버그 및 성능 이슈
-            2. 가독성 및 개선 제안
-            3. 보안 취약점
+          prompt: "이 PR의 코드를 검토하고 버그나 개선점을 파악하여 코드를 직접 수정해 주세요."
           model: "gemini-2.5-pro"
+          auto-commit: true # 수정한 코드를 자동으로 Git Commit & Push 진행
